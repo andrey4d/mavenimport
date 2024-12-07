@@ -1,4 +1,4 @@
-log_format: text
+log_format: json
 artifacts_path: dev
 m2_path: /Users/andrey/.m2/repository
 
