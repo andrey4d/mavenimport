@@ -6,45 +6,56 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/andrey4d/mavenimport/internal/artifacts"
 	"github.com/andrey4d/mavenimport/internal/config"
+	"github.com/andrey4d/mavenimport/internal/upload"
 )
 
 func main() {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		slog.Error("Error:", slog.Any("error", err))
+		panic(err)
 	}
 
-	logHandlerOptions := slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}
+	log := InitLog(cfg.LogLevel)
+	log.Debug("Config", slog.Any("config", cfg))
 
-	logHandler := slog.Default().Handler()
-	if cfg.LogFormat == "json" {
-		logHandler = slog.NewJSONHandler(os.Stdout, &logHandlerOptions)
-	} else {
-		logHandler = slog.NewTextHandler(os.Stdout, &logHandlerOptions)
-	}
+	log.Info("Run import...")
 
-	logger := slog.New(logHandler)
-	slog.SetDefault(logger)
-	slog.Debug("Config", slog.Any("config", cfg))
+	arts := artifacts.NewArtifacts(*log, cfg.M2Path, cfg.ArtifactsPath)
 
-	slog.Info("Run import...")
-
-	a, err := artifacts.GetArtifacts(cfg.M2Path, cfg.ArtifactsPath, "jar")
+	a, err := arts.GetArtifacts()
 	if err != nil {
 		slog.Error("get artifacts", slog.Any("error", err))
 	}
 
+	client := upload.NewClient(*log, cfg.Url, cfg.Repository, cfg.Token)
 	for _, v := range a {
-		fmt.Println(v)
+		if err := client.Upload(v); err != nil {
+			slog.Error("upload", slog.Any("error", err))
+		}
 	}
-	fmt.Println(cfg.GetToken())
+}
+
+func InitLog(loglvl string) *slog.Logger {
+	var lvl slog.Level
+	switch loglvl {
+	case "info":
+		lvl = slog.LevelInfo
+	case "debug":
+		lvl = slog.LevelDebug
+	case "worn":
+		lvl = slog.LevelWarn
+	}
+
+	logHandlerOptions := slog.HandlerOptions{
+		Level: lvl,
+	}
+
+	logHandler := slog.NewJSONHandler(os.Stdout, &logHandlerOptions)
+	return slog.New(logHandler)
 }

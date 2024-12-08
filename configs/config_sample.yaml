@@ -1,6 +1,7 @@
-log_format: json
-artifacts_path: dev
+log_level: info #info, debug, warn
+artifacts_path: dev 
 m2_path: /Users/andrey/.m2/repository
 
-repository_url: https://nexus.home.local/maven-releases
+repository_url: https://nexus.home.local
+repository_name: maven-releases
 token: dXNlcjpwYXNzd29yZA==

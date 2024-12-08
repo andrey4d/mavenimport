@@ -6,7 +6,6 @@ package artifacts
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -16,34 +15,50 @@ import (
 type Artifact struct {
 	Pom     string
 	Package string
-	Path    string
 }
 
-func GetArtifacts(repository, dir string, packaging string) ([]Artifact, error) {
-	out := []Artifact{}
-	os.Chdir(repository)
-	err := filepath.Walk(dir, visit(&out, packaging))
-	if err != nil {
-		fmt.Println(err)
+type Artifacts struct {
+	log        slog.Logger
+	arts       []Artifact
+	repository string
+	dir        string
+}
+
+const PACKAGING = "jar"
+
+func NewArtifacts(logger slog.Logger, repository, dir string) *Artifacts {
+	return &Artifacts{
+		log:        logger,
+		repository: repository,
+		dir:        dir,
 	}
-	return out, nil
 }
 
-func visit(a *[]Artifact, packaging string) filepath.WalkFunc {
+func (a *Artifacts) GetArtifacts() ([]Artifact, error) {
+
+	os.Chdir(a.repository)
+	err := filepath.Walk(a.dir, a.walk())
+	if err != nil {
+		a.log.Error("GetArtifacts()", slog.Any("error", err))
+	}
+	return a.arts, nil
+}
+
+func (a *Artifacts) walk() filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 
 		if err != nil {
-			slog.Error("walk func", slog.Any("error", err))
+			a.log.Error("walk()", slog.Any("error", err))
 			return err
 		}
 
 		if !info.IsDir() {
-			if filepath.Ext(path) == "."+packaging {
-				art, err := constructArtifact(path)
+			if filepath.Ext(path) == "."+PACKAGING {
+				art, err := a.constructArtifact(path)
 				if err != nil {
 					return err
 				}
-				*a = append(*a, *art)
+				a.arts = append(a.arts, *art)
 			}
 
 		}
@@ -51,13 +66,13 @@ func visit(a *[]Artifact, packaging string) filepath.WalkFunc {
 	}
 }
 
-func constructArtifact(path string) (*Artifact, error) {
+func (a *Artifacts) constructArtifact(path string) (*Artifact, error) {
 	art := Artifact{
-		Path:    filepath.Dir(path),
-		Package: filepath.Base(path),
+		Package: a.repository + "/" + path,
 	}
 	pom := strings.TrimSuffix(art.Package, filepath.Ext(art.Package)) + ".pom"
-	if _, err := os.Stat(art.Path + "/" + pom); errors.Is(err, os.ErrNotExist) {
+
+	if _, err := os.Stat(pom); errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
 	art.Pom = pom

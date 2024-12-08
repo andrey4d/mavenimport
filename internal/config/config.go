@@ -15,11 +15,12 @@ import (
 const CONFIG_PATH = "./configs/config.yaml"
 
 type Config struct {
-	LogFormat     string `yaml:"log_format"`
+	LogLevel      string `yaml:"log_level"`
 	ArtifactsPath string `yaml:"artifacts_path"`
 	M2Path        string `yaml:"m2_path"`
-	Toke          string `yaml:"token"`
-	RepositoryUrl string `yaml:"repository_url"`
+	Token         string `yaml:"token"`
+	Url           string `yaml:"repository_url"`
+	Repository    string `yaml:"repository_name"`
 }
 
 func NewConfig() *Config {
@@ -56,7 +57,7 @@ func (c *Config) GetConfig() *Config {
 }
 
 func (c *Config) GetToken() (string, error) {
-	data, err := base64.StdEncoding.DecodeString(c.Toke)
+	data, err := base64.StdEncoding.DecodeString(c.Token)
 	if err != nil {
 		return "", err
 	}
