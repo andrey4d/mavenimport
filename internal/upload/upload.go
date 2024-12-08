@@ -36,8 +36,6 @@ func NewClient(log slog.Logger, url, repository, token string) *Client {
 }
 
 func (c *Client) Upload(a artifacts.Artifact) error {
-	c.log.Info("Upload()", slog.Any("artifact", a.Package))
-
 	pom, err := os.Open(a.Pom)
 	if err != nil {
 		return err
@@ -78,9 +76,8 @@ func (c *Client) Upload(a artifacts.Artifact) error {
 	if err != nil {
 		c.log.Error("Upload()", slog.Any("error", err))
 	}
-	c.log.Info("Upload()", slog.Any("Status", resp.Status))
-	c.log.Debug("Upload()", slog.Any("response header", resp.Header))
-	c.log.Debug("Upload()", slog.Any("response body", string(body)))
+	c.log.Info("Upload()", slog.Any("artifact", a.Package), slog.Any("Status", resp.Status))
+	c.log.Debug("Upload()", slog.Any("response header", resp.Header), slog.Any("response body", string(body)))
 
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/andrey4d/mavenimport/internal/artifacts"
 	"github.com/andrey4d/mavenimport/internal/config"
+	"github.com/andrey4d/mavenimport/internal/logger/handlers/slogpretty"
 	"github.com/andrey4d/mavenimport/internal/upload"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	log := InitLog(cfg.LogLevel)
 	log.Debug("Config", slog.Any("config", cfg))
 
-	log.Info("Run import...")
+	log.Info("Run import", slog.String("source", cfg.M2Path+"/"+cfg.ArtifactsPath), slog.String("target", cfg.Url+"/service/rest/repository/browse/"+cfg.Repository))
 
 	arts := artifacts.NewArtifacts(*log, cfg.M2Path, cfg.ArtifactsPath)
 
@@ -42,20 +43,37 @@ func main() {
 }
 
 func InitLog(loglvl string) *slog.Logger {
-	var lvl slog.Level
+	var logger *slog.Logger
 	switch loglvl {
 	case "info":
-		lvl = slog.LevelInfo
+		logger = stdSLog(slog.LevelInfo)
 	case "debug":
-		lvl = slog.LevelDebug
+		logger = stdSLog(slog.LevelDebug)
 	case "worn":
-		lvl = slog.LevelWarn
+		logger = stdSLog(slog.LevelWarn)
+	case "pinfo":
+		logger = prettySlog(slog.LevelInfo)
+	case "pdebug":
+		logger = prettySlog(slog.LevelDebug)
+	case "pworn":
+		logger = prettySlog(slog.LevelWarn)
 	}
 
+	return logger
+}
+
+func prettySlog(lvl slog.Level) *slog.Logger {
+	logHandlerOptions := slogpretty.PrettyHandlerOptions{
+		SlogOpts: &slog.HandlerOptions{
+			Level: lvl,
+		},
+	}
+	return slog.New(logHandlerOptions.NewPrettyHandler(os.Stdout))
+}
+
+func stdSLog(lvl slog.Level) *slog.Logger {
 	logHandlerOptions := slog.HandlerOptions{
 		Level: lvl,
 	}
-
-	logHandler := slog.NewJSONHandler(os.Stdout, &logHandlerOptions)
-	return slog.New(logHandler)
+	return slog.New(slog.NewJSONHandler(os.Stdout, &logHandlerOptions))
 }
