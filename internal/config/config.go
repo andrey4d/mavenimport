@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const CONFIG_PATH = "./configs/config.yaml"
+const CONFIG_PATH = "config.yaml"
 
 type Config struct {
 	LogLevel      string `yaml:"log_level"`
