@@ -4,18 +4,9 @@
  */
 package logger
 
-import (
-	"log/slog"
-)
-
 type Logger interface {
 	Debug(string, ...any)
 	Info(string, ...any)
 	Error(string, ...any)
-	Fatal(string, ...any)
-}
-
-func NewLogger(h slog.Handler) *slog.Logger {
-	l := slog.New(h)
-	return l
+	Warn(string, ...any)
 }
