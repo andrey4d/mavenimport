@@ -36,23 +36,17 @@ func NewClient(log slog.Logger, url, repository, token string) *Client {
 	}
 }
 
-func (c *Client) UploadGoWG(a artifacts.Artifact, wg *sync.WaitGroup) error {
-	wg.Add(1)
-	outputChannel := make(chan error)
+func (c *Client) UploadGoWG(a artifacts.Artifact, wg *sync.WaitGroup, ch chan error, index int) {
 	c.log.Debug("Run goroutine", slog.String("artifact", a.Package))
-	go func() {
-		defer wg.Done()
-		err := c.Upload(a)
-		if err == nil {
-			outputChannel <- nil
-		} else {
-			outputChannel <- err
-		}
-	}()
-	return <-outputChannel
+	defer wg.Done()
+	c.log.Debug("UploadGoWG()", slog.Int("gorutine index", index))
+	err := c.Upload(a)
+	if err != nil {
+		ch <- err
+	}
 }
 
-func (c *Client) UploadGo(a artifacts.Artifact) error {
+func (c *Client) UploadGo(a artifacts.Artifact, i int) error {
 	outputChannel := make(chan error)
 	c.log.Debug("Run goroutine", slog.String("artifact", a.Package))
 	go func() {

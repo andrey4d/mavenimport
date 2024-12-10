@@ -8,6 +8,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"sync"
 
 	"github.com/andrey4d/mavenimport/internal/artifacts"
 	"github.com/andrey4d/mavenimport/internal/config"
@@ -36,11 +37,20 @@ func main() {
 
 	client := upload.NewClient(*log, cfg.Url, cfg.Repository, cfg.Token)
 
-	for _, v := range a {
-		if err := client.UploadGo(v); err != nil {
+	errs := make(chan error)
+
+	go func() {
+		for err := range errs {
 			slog.Error("main() Upload", slog.Any("error", err))
 		}
+	}()
+
+	var wg sync.WaitGroup
+	for i, v := range a {
+		wg.Add(1)
+		go client.UploadGoWG(v, &wg, errs, i)
 	}
+	wg.Wait()
 }
 
 func InitLog(loglvl string) *slog.Logger {
