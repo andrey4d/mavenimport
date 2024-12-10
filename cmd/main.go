@@ -7,12 +7,13 @@ package main
 
 import (
 	"log/slog"
-	"os"
+
 	"sync"
 
 	"github.com/andrey4d/mavenimport/internal/artifacts"
 	"github.com/andrey4d/mavenimport/internal/config"
-	"github.com/andrey4d/mavenimport/internal/logger/handlers/slogpretty"
+	"github.com/andrey4d/mavenimport/internal/logger"
+
 	"github.com/andrey4d/mavenimport/internal/upload"
 )
 
@@ -23,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	log := InitLog(cfg.LogLevel)
+	log := logger.InitLog(cfg.LogLevel)
 	log.Debug("Config", slog.Any("config", cfg))
 
 	log.Info("Run import", slog.String("source", cfg.M2Path+"/"+cfg.ArtifactsPath), slog.String("target", cfg.Url+"/service/rest/repository/browse/"+cfg.Repository))
@@ -51,40 +52,4 @@ func main() {
 		go client.UploadGoWG(v, &wg, errs, i)
 	}
 	wg.Wait()
-}
-
-func InitLog(loglvl string) *slog.Logger {
-	var logger *slog.Logger
-	switch loglvl {
-	case "info":
-		logger = stdSLog(slog.LevelInfo)
-	case "debug":
-		logger = stdSLog(slog.LevelDebug)
-	case "worn":
-		logger = stdSLog(slog.LevelWarn)
-	case "pinfo":
-		logger = prettySlog(slog.LevelInfo)
-	case "pdebug":
-		logger = prettySlog(slog.LevelDebug)
-	case "pworn":
-		logger = prettySlog(slog.LevelWarn)
-	}
-
-	return logger
-}
-
-func prettySlog(lvl slog.Level) *slog.Logger {
-	logHandlerOptions := slogpretty.PrettyHandlerOptions{
-		SlogOpts: &slog.HandlerOptions{
-			Level: lvl,
-		},
-	}
-	return slog.New(logHandlerOptions.NewPrettyHandler(os.Stdout))
-}
-
-func stdSLog(lvl slog.Level) *slog.Logger {
-	logHandlerOptions := slog.HandlerOptions{
-		Level: lvl,
-	}
-	return slog.New(slog.NewJSONHandler(os.Stdout, &logHandlerOptions))
 }
