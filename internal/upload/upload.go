@@ -7,8 +7,10 @@ package upload
 import (
 	"bytes"
 	"io"
+
 	"mime/multipart"
 	"os"
+	"sync"
 
 	"net/http"
 	"strings"
@@ -26,7 +28,6 @@ type Client struct {
 }
 
 func NewClient(log slog.Logger, url, repository, token string) *Client {
-
 	return &Client{
 		URL:        url + "/service/rest/v1/components?repository=" + repository,
 		Token:      token,
@@ -35,7 +36,39 @@ func NewClient(log slog.Logger, url, repository, token string) *Client {
 	}
 }
 
+func (c *Client) UploadGoWG(a artifacts.Artifact, wg *sync.WaitGroup) error {
+	wg.Add(1)
+	outputChannel := make(chan error)
+	c.log.Debug("Run goroutine", slog.String("artifact", a.Package))
+	go func() {
+		defer wg.Done()
+		err := c.Upload(a)
+		if err == nil {
+			outputChannel <- nil
+		} else {
+			outputChannel <- err
+		}
+	}()
+	return <-outputChannel
+}
+
+func (c *Client) UploadGo(a artifacts.Artifact) error {
+	outputChannel := make(chan error)
+	c.log.Debug("Run goroutine", slog.String("artifact", a.Package))
+	go func() {
+
+		err := c.Upload(a)
+		if err == nil {
+			outputChannel <- nil
+		} else {
+			outputChannel <- err
+		}
+	}()
+	return <-outputChannel
+}
+
 func (c *Client) Upload(a artifacts.Artifact) error {
+
 	pom, err := os.Open(a.Pom)
 	if err != nil {
 		return err

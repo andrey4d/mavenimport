@@ -31,13 +31,14 @@ func main() {
 
 	a, err := arts.GetArtifacts()
 	if err != nil {
-		slog.Error("get artifacts", slog.Any("error", err))
+		slog.Error("main() get artifacts", slog.Any("error", err))
 	}
 
 	client := upload.NewClient(*log, cfg.Url, cfg.Repository, cfg.Token)
+
 	for _, v := range a {
-		if err := client.Upload(v); err != nil {
-			slog.Error("upload", slog.Any("error", err))
+		if err := client.UploadGo(v); err != nil {
+			slog.Error("main() Upload", slog.Any("error", err))
 		}
 	}
 }
