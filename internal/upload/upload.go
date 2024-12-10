@@ -37,28 +37,14 @@ func NewClient(log slog.Logger, url, repository, token string) *Client {
 }
 
 func (c *Client) UploadGoWG(a artifacts.Artifact, wg *sync.WaitGroup, ch chan error, index int) {
-	c.log.Debug("Run goroutine", slog.String("artifact", a.Package))
-	defer wg.Done()
 	c.log.Debug("UploadGoWG()", slog.Int("gorutine index", index))
+	defer wg.Done()
+
 	err := c.Upload(a)
+
 	if err != nil {
 		ch <- err
 	}
-}
-
-func (c *Client) UploadGo(a artifacts.Artifact, i int) error {
-	outputChannel := make(chan error)
-	c.log.Debug("Run goroutine", slog.String("artifact", a.Package))
-	go func() {
-
-		err := c.Upload(a)
-		if err == nil {
-			outputChannel <- nil
-		} else {
-			outputChannel <- err
-		}
-	}()
-	return <-outputChannel
 }
 
 func (c *Client) Upload(a artifacts.Artifact) error {
@@ -103,7 +89,13 @@ func (c *Client) Upload(a artifacts.Artifact) error {
 	if err != nil {
 		c.log.Error("Upload()", slog.Any("error", err))
 	}
-	c.log.Info("Upload()", slog.Any("artifact", a.Package), slog.Any("Status", resp.Status))
+
+	if resp.StatusCode == 200 || resp.StatusCode == 204 {
+		c.log.Info("Upload()", slog.Any("artifact", a.Package), slog.Any("Status", resp.Status))
+	} else {
+		c.log.Error("Upload()", slog.Any("artifact", a.Package), slog.Any("Status", resp.Status))
+	}
+
 	c.log.Debug("Upload()", slog.Any("response header", resp.Header), slog.Any("response body", string(body)))
 
 	return nil
