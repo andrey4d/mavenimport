@@ -48,7 +48,7 @@ func (a *Artifacts) walk() filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 
 		if err != nil {
-			a.log.Error("walk()", slog.Any("error", err))
+			a.log.WithGroup("walk()").Error("GetArtifacts()", slog.Any("error", err))
 			return err
 		}
 
@@ -56,9 +56,11 @@ func (a *Artifacts) walk() filepath.WalkFunc {
 			if filepath.Ext(path) == "."+PACKAGING {
 				art, err := a.constructArtifact(path)
 				if err != nil {
-					return err
+					a.log.WithGroup("constructArtifact()").Error("GetArtifacts()", slog.Any("skip", err))
+				} else {
+					a.arts = append(a.arts, *art)
 				}
-				a.arts = append(a.arts, *art)
+
 			}
 
 		}
