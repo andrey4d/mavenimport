@@ -15,12 +15,12 @@ import (
 const CONFIG_PATH = "config.yaml"
 
 type Config struct {
-	LogLevel      string `yaml:"log_level"`
-	ArtifactsPath string `yaml:"artifacts_path"`
-	M2Path        string `yaml:"m2_path"`
-	Token         string `yaml:"token"`
-	Url           string `yaml:"repository_url"`
-	Repository    string `yaml:"repository_name"`
+	LogLevel      string   `yaml:"log_level"`
+	ArtifactsPath []string `yaml:"artifacts_path"`
+	M2Path        string   `yaml:"m2_path"`
+	Token         string   `yaml:"token"`
+	Url           string   `yaml:"repository_url"`
+	Repository    string   `yaml:"repository_name"`
 }
 
 func NewConfig() *Config {

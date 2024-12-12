@@ -21,22 +21,24 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	log := logger.InitLog(cfg.LogLevel)
 	log.Debug("Config", slog.Any("config", cfg))
 
-	log.Info("Run import", slog.String("source", cfg.M2Path+"/"+cfg.ArtifactsPath), slog.String("target", cfg.Url+"/service/rest/repository/browse/"+cfg.Repository))
+	for _, dir := range cfg.ArtifactsPath {
 
-	arts := artifacts.NewArtifacts(*log, cfg.M2Path, cfg.ArtifactsPath)
-	a, err := arts.GetArtifacts()
-	if err != nil {
-		slog.Error("main() get artifacts", slog.Any("error", err))
+		log.Info("main()", slog.String("Run import", cfg.M2Path+"/"+dir), slog.String("target", cfg.Url+"/service/rest/repository/browse/"+cfg.Repository))
+
+		arts := artifacts.NewArtifacts(*log, cfg.M2Path, dir)
+		a, err := arts.GetArtifacts()
+		if err != nil {
+			slog.Error("main() get artifacts", slog.Any("error", err))
+		}
+
+		client := upload.NewClient(*log, cfg.Url, cfg.Repository, cfg.Token)
+
+		application := application.NewApplication(*log, *client, a)
+
+		application.Run()
 	}
-
-	client := upload.NewClient(*log, cfg.Url, cfg.Repository, cfg.Token)
-
-	application := application.NewApplication(*log, *client, a)
-
-	application.Run()
 
 }

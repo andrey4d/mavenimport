@@ -31,7 +31,7 @@ func (a *Application) Run() {
 
 	go func() {
 		for err := range errs {
-			slog.Error("main() Upload", slog.Any("error", err))
+			slog.Error("application()", slog.Any("upload", err))
 		}
 	}()
 
