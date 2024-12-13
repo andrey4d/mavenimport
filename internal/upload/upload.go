@@ -15,19 +15,18 @@ import (
 	"net/http"
 	"strings"
 
-	"log/slog"
-
 	"github.com/andrey4d/mavenimport/internal/artifacts"
+	"github.com/andrey4d/mavenimport/internal/logger"
 )
 
 type Client struct {
 	URL        string
 	Token      string
 	HTTPClient *http.Client
-	log        slog.Logger
+	log        logger.Logger
 }
 
-func NewClient(log slog.Logger, url, repository, token string) *Client {
+func NewClient(log logger.Logger, url, repository, token string) *Client {
 	return &Client{
 		URL:        url + "/service/rest/v1/components?repository=" + repository,
 		Token:      token,
@@ -37,7 +36,7 @@ func NewClient(log slog.Logger, url, repository, token string) *Client {
 }
 
 func (c *Client) UploadGoWG(a artifacts.Artifact, wg *sync.WaitGroup, ch chan error, index int) {
-	c.log.Debug("UploadGoWG()", slog.Int("gorutine index", index))
+	c.log.Debug("UploadGoWG()", logger.Int("gorutine index", index))
 	defer wg.Done()
 
 	err := c.Upload(a)
@@ -73,30 +72,30 @@ func (c *Client) Upload(a artifacts.Artifact) error {
 
 	req, err := http.NewRequest("POST", c.URL, b)
 	if err != nil {
-		c.log.Error("Upload()", slog.Any("error", err))
+		c.log.Error("Upload()", logger.Any("error", err))
 	}
 	req.Header.Set("Content-Type", FormDataContentType)
 	req.Header.Add("Authorization", "Basic "+c.Token)
-	c.log.Debug("Upload()", slog.Any("request header", req.Header))
+	c.log.Debug("Upload()", logger.Any("request header", req.Header))
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		c.log.Error("Upload()", slog.Any("error", err))
+		c.log.Error("Upload()", logger.Any("error", err))
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		c.log.Error("Upload()", slog.Any("error", err))
+		c.log.Error("Upload()", logger.Any("error", err))
 	}
 
 	if resp.StatusCode == 200 || resp.StatusCode == 204 {
-		c.log.Info("Upload()", slog.Any("artifact", a.Package), slog.Any("Status", resp.Status))
+		c.log.Info("Upload()", logger.Any("artifact", a.Package), logger.Any("Status", resp.Status))
 	} else {
-		c.log.Error("Upload()", slog.Any("artifact", a.Package), slog.Any("Status", resp.Status))
+		c.log.Error("Upload()", logger.Any("artifact", a.Package), logger.Any("Status", resp.Status))
 	}
 
-	c.log.Debug("Upload()", slog.Any("response header", resp.Header), slog.Any("response body", string(body)))
+	c.log.Debug("Upload()", logger.Any("response header", resp.Header), logger.Any("response body", string(body)))
 
 	return nil
 }

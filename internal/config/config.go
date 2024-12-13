@@ -6,9 +6,9 @@ package config
 
 import (
 	"encoding/base64"
-	"log/slog"
 	"os"
 
+	"github.com/andrey4d/mavenimport/internal/logger"
 	"gopkg.in/yaml.v3"
 )
 
@@ -30,19 +30,19 @@ func NewConfig() *Config {
 func LoadConfig() (*Config, error) {
 	configPath := os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		slog.Warn("CONFIG_PATH is not set. Use default", slog.String("path", CONFIG_PATH))
+		logger.Warn("CONFIG_PATH is not set. Use default", logger.String("path", CONFIG_PATH))
 		configPath = CONFIG_PATH
 	}
 
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		slog.Error("Config file doesn't exist.", slog.String("path", configPath))
+		logger.Error("Config file doesn't exist.", logger.String("path", configPath))
 		return nil, err
 	}
 
 	cfg_data, err := os.ReadFile(configPath)
 
 	if err != nil {
-		slog.Error("Read file", slog.String("path", configPath))
+		logger.Error("Read file", logger.String("path", configPath))
 		return nil, err
 	}
 

@@ -6,10 +6,11 @@ package artifacts
 
 import (
 	"errors"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/andrey4d/mavenimport/internal/logger"
 )
 
 type Artifact struct {
@@ -18,7 +19,7 @@ type Artifact struct {
 }
 
 type Artifacts struct {
-	log        slog.Logger
+	log        logger.Logger
 	arts       []Artifact
 	repository string
 	dir        string
@@ -26,7 +27,7 @@ type Artifacts struct {
 
 const PACKAGING = "jar"
 
-func NewArtifacts(logger slog.Logger, repository, dir string) *Artifacts {
+func NewArtifacts(logger logger.Logger, repository, dir string) *Artifacts {
 	return &Artifacts{
 		log:        logger,
 		repository: repository,
@@ -39,8 +40,9 @@ func (a *Artifacts) GetArtifacts() ([]Artifact, error) {
 	os.Chdir(a.repository)
 	err := filepath.Walk(a.dir, a.walk())
 	if err != nil {
-		a.log.Error("GetArtifacts()", slog.Any("error", err))
+		a.log.Error("GetArtifacts()", logger.Any("error", err))
 	}
+
 	return a.arts, nil
 }
 
@@ -48,7 +50,7 @@ func (a *Artifacts) walk() filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 
 		if err != nil {
-			a.log.WithGroup("walk()").Error("GetArtifacts()", slog.Any("error", err))
+			a.log.Error("GetArtifacts()", logger.Any("walk()", err))
 			return err
 		}
 
@@ -56,7 +58,7 @@ func (a *Artifacts) walk() filepath.WalkFunc {
 			if filepath.Ext(path) == "."+PACKAGING {
 				art, err := a.constructArtifact(path)
 				if err != nil {
-					a.log.WithGroup("constructArtifact()").Error("GetArtifacts()", slog.Any("skip", err))
+					a.log.Error("constructArtifact()", logger.Any("skip", err))
 				} else {
 					a.arts = append(a.arts, *art)
 				}

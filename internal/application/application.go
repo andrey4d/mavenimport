@@ -5,22 +5,22 @@
 package application
 
 import (
-	"log/slog"
 	"sync"
 
 	"github.com/andrey4d/mavenimport/internal/artifacts"
+	"github.com/andrey4d/mavenimport/internal/logger"
 	"github.com/andrey4d/mavenimport/internal/upload"
 )
 
 type Application struct {
-	logger    slog.Logger
+	log       logger.Logger
 	client    upload.Client
 	artifacts []artifacts.Artifact
 }
 
-func NewApplication(logger slog.Logger, client upload.Client, artifacts []artifacts.Artifact) *Application {
+func NewApplication(logger logger.Logger, client upload.Client, artifacts []artifacts.Artifact) *Application {
 	return &Application{
-		logger:    logger,
+		log:       logger,
 		client:    client,
 		artifacts: artifacts,
 	}
@@ -31,7 +31,7 @@ func (a *Application) Run() {
 
 	go func() {
 		for err := range errs {
-			slog.Error("application()", slog.Any("upload", err))
+			a.log.Error("application()", logger.Any("upload", err))
 		}
 	}()
 
