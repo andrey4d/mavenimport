@@ -26,7 +26,7 @@ func NewApplication(logger logger.Logger, client upload.Client, artifacts []arti
 	}
 }
 
-func (a *Application) Run() {
+func (a *Application) RunGo() {
 	errs := make(chan error)
 
 	go func() {
@@ -41,4 +41,13 @@ func (a *Application) Run() {
 		go a.client.UploadGoWG(v, &wg, errs, i)
 	}
 	wg.Wait()
+}
+
+func (a *Application) Run() {
+	for _, v := range a.artifacts {
+		err := a.client.Upload(v)
+		if err != nil {
+			a.log.Error("application()", logger.Any("upload", err))
+		}
+	}
 }
